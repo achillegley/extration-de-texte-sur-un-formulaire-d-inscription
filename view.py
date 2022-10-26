@@ -2,9 +2,9 @@ import streamlit as st
 import os
 from PIL import Image
 import pandas as pd
-import searcher
+import extractor
 
-st.title('POSTE DE CADASTRE')
+st.title("FORMULAIRE INSCRIPTION")
 
 def save_uploaded_file(uploaded_file):
     try:
@@ -13,35 +13,31 @@ def save_uploaded_file(uploaded_file):
         return 1
     except:
         return 0
-
-
-def make_clickable(i):
-    theLink="images/" + (str(i)).split('/')[1]
-    return '<a href="http://127.0.0.1:8003/'+str(theLink)+'"  target="_blank">'+str((str(i)).split('/')[1])+'</a>'
+def display_page(page,page_content):
+    st.subheader(page)
+    col1, col2 = st.columns(2)
+    df = pd.DataFrame(
+        {
+            "Titre": list(page_content.keys()),
+            'Valeurs': list(page_content.values())
+        })
+    df = df.to_html(escape=False)
+    # AgGrid(df)
+    st.write(df, unsafe_allow_html=True)
+    st.image(Image.open("pages/"+page+".png"))
 
 # steps
 # file upload -> save
-uploaded_file = st.file_uploader("Veuiller choisir une image")
+uploaded_file = st.file_uploader("Veuiller choisir votre formulaire")
 if uploaded_file is not None:
     if save_uploaded_file(uploaded_file):
-        # display the file
-        display_image = Image.open(uploaded_file)
-        st.image(display_image)
-        result={}
-        result=searcher.true_final_search(uploaded_file.name)
-        first_result=list(result.keys())[0]
-        st.subheader("Le premier document trouvé")
-        display_first_result = Image.open("images/"+(str(first_result)).split('/')[1])
-        st.image(display_first_result)
-        st.subheader("Liste des documents proches")
-        print(result)
-        df = pd.DataFrame(
-            {
-                "Documents": list(result.keys()),
-                'Action': [make_clickable(i) for i in list(result.keys()) ]
-            })
-        df = df.to_html(escape=False)
-        st.write(df, unsafe_allow_html=True)
-        #st.table(df)
+        # display des images
+        #display_image = Image.open(uploaded_file)
+        #st.image(display_image)
+        #result={}
+        result=extractor.ordered_function("uploads/"+uploaded_file.name)
+        st.subheader("Données Extraites")
+        for key in result:
+            display_page(key,result[key])
     else:
         st.header("Some error occured in file upload")
